@@ -1,0 +1,16 @@
+---
+.title = "flatzz — Define in FBS. Generate Zig.",
+.description = "FlatBuffers for Zig.",
+.date = .date("2026-11-10T00:00:00"),
+.layout = "content.shtml",
+.custom = .{ .kind = "home" },
+---
+~~~=html
+<section class="landing-hero page-width" aria-labelledby="hero-heading">
+  <div class="intro-copy">
+    <h1 id="hero-heading">Define in FBS.<em>Generate Zig.</em></h1>
+    <p>Generate Zig types and operations from FlatBuffers schemas.</p>
+    <a class="secondary-link" href="docs/">Read the docs</a>
+  </div>
+</section>
+~~~

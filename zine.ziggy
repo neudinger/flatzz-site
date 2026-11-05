@@ -1,0 +1,11 @@
+.zine_version = "0.14.1-dev",
+.supermd = .{ .headings_h2 = true },
+.site = .simple(.{
+    .title = "flatzz · FlatBuffers for Zig",
+    .host_url = "https://neudinger.github.io",
+    .url_path_prefix = "flatzz-site",
+    .content_dir_path = "content",
+    .layouts_dir_path = "layouts",
+    .assets_dir_path = "assets",
+    .static_assets = [],
+}),

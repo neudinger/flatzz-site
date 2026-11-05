@@ -1,0 +1,14 @@
+# Zig dependencies, caches, generated bundles, and validated Zine output.
+**/.zig-cache/
+**/zig-out/
+/zig-pkg/
+/dist/
+/.zine-build-*/
+# Imported examples and compiler assets are generated in the build cache.
+/examples/
+/assets/compiler.mjs
+/assets/flatzz-compiler.wasm
+/assets/runtime.wasm
+# Agent documents/design references belong in ../flatzz-site-clank.
+/art/
+.DS_Store

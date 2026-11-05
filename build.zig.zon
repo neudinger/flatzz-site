@@ -1,0 +1,13 @@
+.{
+    .name = .flatzz_site,
+    .fingerprint = 0x6bda2cc440169508,
+    .version = "0.0.0",
+    .minimum_zig_version = "0.17.0",
+    .dependencies = .{
+        .zine = .{
+            .url = "git+https://github.com/kristoff-it/zine#6c9782957f46cf1162aa6fe8e881162b2d31480e",
+            .hash = "zine-0.14.1-ou6nIJKIFwBEjCLNI4Hryh9YWa73Rm_DCsypWHbEp5l8",
+        },
+    },
+    .paths = .{ "build.zig", "build.zig.zon", "zine.ziggy", "content", "layouts", "assets", "tools", "tests", "README.md" },
+}

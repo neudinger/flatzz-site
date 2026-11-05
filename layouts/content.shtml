@@ -1,0 +1,5 @@
+<extend template="base.shtml">
+<head id="site-head"></head>
+<main id="site-content">
+  <ctx :html="$page.content()"></ctx>
+</main>

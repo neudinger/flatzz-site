@@ -1,0 +1,11 @@
+---
+.title = "Documentation — flatzz",
+.description = "Generate typed Zig from FlatBuffers schemas.",
+.date = .date("2026-11-10T00:00:00"),
+.layout = "content.shtml",
+.custom = .{ .kind = "docs" },
+---
+# Flatzz documentation
+
+Use the Flatzz compiler to generate Zig types and operations from FlatBuffers
+schemas. The runtime serializes values and borrows views of their backing bytes.
