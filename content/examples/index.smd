@@ -1,0 +1,7 @@
+---
+.title = "Official examples — flatzz",
+.description = "Complete Zig projects, build files, and linked schemas from the Flatzz example catalogue.",
+.date = .date("2026-11-10T00:00:00"),
+.layout = "examples.shtml",
+.custom = .{ .kind = "examples" },
+---

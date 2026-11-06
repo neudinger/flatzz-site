@@ -4,6 +4,11 @@
     .version = "0.0.0",
     .minimum_zig_version = "0.17.0",
     .dependencies = .{
+        // .flatzz = .{ .path = "../flatzz" },
+        .flatzz = .{
+            .url = "git+https://github.com/neudinger/flatzz#74337950588f5bdc297e298ac95633d1ff4c9d7d",
+            .hash = "flatzz-0.0.0-dyY11_8yJgBojsETN2uFsmJM0ch-yhijLHmaTm57lMkU",
+        },
         .zine = .{
             .url = "git+https://github.com/kristoff-it/zine#6c9782957f46cf1162aa6fe8e881162b2d31480e",
             .hash = "zine-0.14.1-ou6nIJKIFwBEjCLNI4Hryh9YWa73Rm_DCsypWHbEp5l8",

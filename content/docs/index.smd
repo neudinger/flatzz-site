@@ -9,3 +9,7 @@
 
 Use the Flatzz compiler to generate Zig types and operations from FlatBuffers
 schemas. The runtime serializes values and borrows views of their backing bytes.
+
+~~~=html
+<p>Browse the <a href="../examples/">official examples</a> to see complete Zig projects.</p>
+~~~

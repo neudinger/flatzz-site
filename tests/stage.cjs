@@ -12,3 +12,11 @@ test("the release publishes the homepage, documentation, and theme", () => {
   assert(fs.statSync("dist/assets/rocket-ziguana.png").size > 0);
   assert(fs.statSync("dist/assets/fonts/InterVariable.woff2").size > 0);
 });
+
+test("the release publishes the official catalogue and source browser", () => {
+  const page = fs.readFileSync("dist/examples/index.html", "utf8");
+  assert.match(page, /program-navigation/);
+  const catalogue = JSON.parse(fs.readFileSync("dist/examples/catalog.json", "utf8"));
+  assert(catalogue.schemas.some(schema => schema.entry === "flatbuf/monster.fbs"));
+  assert(catalogue.programs.some(program => program.key === "readme"));
+});

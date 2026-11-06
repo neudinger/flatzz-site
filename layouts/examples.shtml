@@ -1,0 +1,14 @@
+<extend template="base.shtml">
+<head id="site-head"></head>
+<main id="site-content">
+  <div class="reference-layout page-width">
+    <aside class="reference-sidebar"><nav id="program-navigation" aria-label="Official example projects"></nav></aside>
+    <section id="content" class="example-reader">
+      <header class="reference-intro"><span class="reference-eyebrow">OFFICIAL EXAMPLES</span><h1 id="program-title">Flatzz examples</h1><p id="program-description">Loading the library's example catalogue…</p></header>
+      <nav id="program-files" class="source-tabs" aria-label="Project source files"></nav>
+      <section class="code-panel reference-source" aria-labelledby="program-filename"><header class="panel-header"><h2 id="program-filename">main.zig</h2><div><button id="program-copy" type="button" disabled>Copy</button><a id="program-download" download hidden>Download</a></div></header><pre tabindex="0" aria-label="Official source code"><code id="program-code">Loading source…</code></pre></section>
+      <nav id="program-schemas" class="example-schema-links" aria-label="Related schemas and project"></nav>
+      <p id="program-error" class="error-message" role="alert" hidden></p>
+    </section>
+  </div>
+</main>

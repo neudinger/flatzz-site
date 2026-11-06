@@ -20,13 +20,18 @@ pub fn build(builder: *std.Build) void {
         .highlight = false,
     }).artifact("zine");
     const tools = Tools.init(builder);
+    const catalog = tools.addCatalog();
     const release = tools.addRun(.{ .build = .{
         .zine = zine,
-        .bundle = tools.addSiteAssets(),
+        .bundle = tools.addSiteAssets(catalog),
     } });
     builder.getInstallStep().dependOn(&release.step);
     const tests = builder.step("test", "Build and test the website");
     const published = tools.node("tests/stage.cjs");
     published.step.dependOn(&release.step);
     tests.dependOn(&published.step);
+    const discovery = tools.node("tests/catalogue.cjs");
+    discovery.addArtifactArg2(tools.executable, .{ .make_absolute = true });
+    discovery.addArtifactArg2(tools.compiler, .{ .make_absolute = true });
+    tests.dependOn(&discovery.step);
 }

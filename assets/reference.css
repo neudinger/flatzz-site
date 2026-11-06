@@ -1,0 +1,96 @@
+/* Shared documentation and source-browser surfaces use the homepage palette. */
+.reference-layout { display: grid; grid-template-columns: 210px minmax(0, 1fr); gap: 40px; padding-block: 42px 64px; }
+.reference-sidebar { align-self: start; position: sticky; top: 24px; min-width: 0; }
+.reference-sidebar nav { display: grid; gap: 5px; }
+.reference-sidebar a { padding: 8px 12px; border-left: 2px solid var(--line-soft); color: var(--muted); font-size: 13px; overflow-wrap: anywhere; }
+.reference-sidebar a:hover, .reference-sidebar a[aria-current] { color: var(--accent); border-color: var(--accent); background: var(--surface); }
+.reference-sidebar p { margin: 30px 12px 10px; color: var(--quiet); font: 11px var(--mono); text-transform: uppercase; letter-spacing: .08em; }
+.reference-intro { margin-bottom: 28px; }
+.reference-eyebrow { color: var(--accent); font: 11px var(--mono); letter-spacing: .1em; }
+.reference-intro h1 { font-size: clamp(36px, 4vw, 60px); line-height: 1.15; letter-spacing: -1.8px; margin: 12px 0 18px; }
+.reference-intro p { color: var(--muted); max-width: 60ch; margin: 0; }
+.reference-options { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 24px; padding-block: 12px 20px; color: var(--muted); font-size: 12px; }
+.reference-options label { display: flex; align-items: center; gap: 8px; }
+.reference-options select { padding: 5px 10px; border: 1px solid var(--line); border-radius: 4px; background: var(--surface); }
+.reference-options input { accent-color: var(--accent); }
+.api-reference { min-width: 0; --reference-code-size: 16px; }
+.compiler-reference { min-width: 0; padding: clamp(16px, 3vw, 32px); border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.api-reference .hidden { display: none !important; }
+.compiler-reference a, .reference-article a { color: var(--accent); text-decoration: underline; text-underline-offset: 4px; }
+.compiler-reference p { color: var(--muted); }
+.compiler-reference h1 { font-size: 28px; line-height: 1.4; letter-spacing: -.5px; margin: 20px 0; }
+.compiler-reference h2 { font-size: 24px; letter-spacing: -.5px; margin: 30px 0 16px; }
+.compiler-reference h3 { font-size: 20px; }
+.compiler-reference #hdrName { overflow-wrap: anywhere; }
+.compiler-reference #hdrName a { margin-left: 14px; font: 13px var(--mono); }
+.compiler-reference #search { width: 100%; min-height: 48px; padding: 12px 16px; border: 1px solid var(--line); border-radius: 5px; background: var(--editor); font: 14px/1.5 var(--mono); }
+.compiler-reference #listNav { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 26px; padding: 0; list-style: none; }
+.compiler-reference #listNav a { display: block; padding: 6px 10px; border: 1px solid var(--line); border-radius: 4px; text-decoration: none; font: 12px var(--mono); }
+.compiler-reference #listNav a.active { border-color: var(--accent); background: var(--editor); }
+.compiler-reference pre, .reference-source pre { position: relative; margin: 16px 0; padding: 24px; border: 1px solid var(--line-soft); border-radius: 5px; background: var(--editor); overflow: auto; font: var(--reference-code-size, 16px)/1.8 var(--mono); tab-size: 4; }
+.compiler-reference code, .reference-source code { font: inherit; }
+.compiler-reference :not(pre) > code { color: var(--accent); white-space: break-spaces; font-family: var(--mono); }
+.api-reference.wrap-code pre, .api-reference.wrap-code pre code, .reference-source pre { white-space: pre-wrap; overflow-wrap: anywhere; }
+.reference-copy { position: absolute; right: 8px; top: 6px; padding: 2px 7px; border: 1px solid var(--line); border-radius: 3px; background: var(--surface); color: var(--muted); font: 11px/1.5 var(--mono); }
+.compiler-reference .columns { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 15rem), 1fr)); gap: 8px; list-style: none; padding: 0; }
+.compiler-reference .columns a { display: block; padding: 9px 13px; border: 1px solid var(--line-soft); border-radius: 5px; font: 13px var(--mono); overflow-wrap: anywhere; text-decoration: none; }
+.compiler-reference .columns a:hover { border-color: var(--accent); }
+.compiler-reference table { display: block; max-width: 100%; overflow: auto; border-collapse: collapse; margin-block: 24px; text-align: left; }
+.compiler-reference th, .compiler-reference td { padding: 12px 14px; border-bottom: 1px solid var(--line-soft); vertical-align: top; }
+.compiler-reference dl { margin: 0; }
+.compiler-reference dl > div { margin-top: 16px; padding: 18px; border: 1px solid var(--line-soft); border-radius: 5px; overflow-wrap: anywhere; }
+.compiler-reference dd { margin: 12px 0 0; }
+.compiler-reference #listFields > div, .compiler-reference #listParams > div { margin-bottom: 16px; overflow-wrap: anywhere; }
+.compiler-reference .fieldDocs { padding: 12px 16px; border: 1px solid var(--line-soft); border-top: 0; }
+.compiler-reference .source-code { display: grid; grid-template-columns: auto minmax(0, 1fr); padding: 0; font: inherit; overflow: hidden; }
+.compiler-reference .source-code pre { margin: 0; border: 0; white-space: pre; overflow-wrap: normal; }
+.compiler-reference .source-code pre code { white-space: pre; overflow-wrap: normal; }
+.compiler-reference .source-line-numbers pre { text-align: right; padding-inline: 12px; color: var(--quiet); user-select: none; }
+.compiler-reference .source-text { min-width: 0; overflow: auto; }
+.compiler-reference #listSearchResults { list-style: none; padding: 0; }
+.compiler-reference #listSearchResults li { margin-block: 8px; padding: 10px 15px; border: 1px solid var(--line-soft); border-radius: 5px; overflow-wrap: anywhere; }
+.compiler-reference #listSearchResults .selected { border-color: var(--accent); background: var(--editor); }
+.compiler-reference .tok-kw, .compiler-reference .tok-type { color: #e2b1ed; }
+.compiler-reference .tok-str { color: #efb6a9; }
+.compiler-reference .tok-builtin, .compiler-reference .tok-fn { color: var(--accent); }
+.compiler-reference .tok-comment { color: #97a69e; font-style: italic; }
+.compiler-reference .tok-number, .compiler-reference .tok-null { color: #e7c18b; }
+.compiler-reference #helpDialog { position: fixed; z-index: 8; inset: 15% auto auto 50%; transform: translateX(-50%); width: min(420px, calc(100% - 32px)); padding: 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); box-shadow: 0 20px 80px #000a; }
+.compiler-reference #helpDialog dl { display: flex; flex-wrap: wrap; gap: 8px; }
+.compiler-reference kbd { padding: 2px 6px; border: 1px solid var(--line); border-radius: 4px; background: var(--editor); font: 12px var(--mono); }
+.compiler-reference #errors { position: fixed; z-index: 9; inset: auto 16px 16px; max-height: 40vh; overflow: auto; padding: 20px; border: 1px solid #e98779; background: var(--editor); }
+.docs-overview { padding-block: 48px 72px; }
+.docs-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 290px), 1fr)); gap: 20px; margin-top: 30px; }
+.docs-card { display: block; padding: 26px; border: 1px solid var(--line); border-radius: 7px; background: var(--surface); }
+.docs-card h2 { margin: 0 0 12px; font-size: 25px; letter-spacing: -.5px; }
+.docs-card p { margin: 0 0 20px; color: var(--muted); font-size: 14px; }
+.docs-card > span { color: var(--accent); font-size: 13px; }
+.docs-card:hover { border-color: var(--accent); }
+.reference-article { margin-top: 36px; max-width: 80ch; color: var(--muted); }
+.reference-article h2 { color: var(--text); }
+.reference-article code { color: var(--accent); font-family: var(--mono); }
+.example-reader { min-width: 0; }
+.example-reader .source-tabs { margin-block: 20px 12px; padding: 0; }
+.example-reader .source-tabs a { display: block; padding: 7px 12px; border: 1px solid var(--line); border-radius: 4px; color: var(--muted); font: 12px var(--mono); overflow-wrap: anywhere; }
+.example-reader .source-tabs a[aria-current] { color: var(--accent); border-color: var(--accent); }
+.reference-source { --reference-code-size: 16px; min-width: 0; }
+.reference-source pre { margin: 0; padding: 22px; border: 0; border-radius: 0; }
+.example-reader .panel-header h2 { overflow-wrap: anywhere; }
+.example-reader .panel-header button, .example-reader .panel-header a { padding: 4px 10px; border: 1px solid var(--line); border-radius: 4px; background: transparent; font: 12px var(--mono); color: var(--accent); }
+.example-reader .panel-header > div { display: flex; flex-wrap: wrap; gap: 10px; }
+.example-reader .code-panel { border: 1px solid var(--line); border-radius: 7px; overflow: hidden; }
+.example-schema-links { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; }
+.example-schema-links a { color: var(--accent); font-size: 13px; text-decoration: underline; }
+@media (max-width: 1000px) { .reference-layout { grid-template-columns: 170px minmax(0, 1fr); gap: 24px; } }
+@media (max-width: 780px) {
+  .reference-layout { grid-template-columns: 1fr; padding-block: 26px 40px; }
+  .reference-sidebar { position: static; }
+  .reference-sidebar nav { display: flex; flex-wrap: wrap; gap: 5px 12px; }
+  .reference-sidebar p, #reference-outline { display: none; }
+  .reference-sidebar a { padding: 5px 9px; }
+  .reference-intro h1 { font-size: 38px; }
+  .docs-overview { padding-block: 30px 45px; }
+  .compiler-reference { padding: 16px; }
+  .compiler-reference pre, .reference-source pre { padding: 24px 14px 16px; }
+  .compiler-reference h1 { font-size: 24px; }
+}

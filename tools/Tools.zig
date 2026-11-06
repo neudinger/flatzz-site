@@ -6,6 +6,14 @@ const Self = @This();
 
 builder: *Build,
 executable: *Step.Compile,
+library: *Build.Dependency,
+compiler: *Step.Compile,
+
+/// Cache-backed official source and generated schema catalogue.
+pub const Catalogue = struct {
+    directory: Build.LazyPath,
+};
+
 /// Engine and generated assets for the release.
 pub const SiteAssets = struct {
     zine: *Step.Compile,
@@ -14,9 +22,16 @@ pub const SiteAssets = struct {
 
 pub const Command = union(enum) {
     build: SiteAssets,
+    catalog,
 };
 
 pub fn init(builder: *Build) Self {
+    const library = builder.dependency("flatzz", .{
+        .target = builder.graph.host,
+        .optimize = .ReleaseSmall,
+        .@"schema-tools" = true,
+        .@"wasm-compiler" = false,
+    });
     const executable = builder.addExecutable(.{
         .name = "flatzz-site",
         .root_module = builder.createModule(.{
@@ -29,14 +44,54 @@ pub fn init(builder: *Build) Self {
     return .{
         .builder = builder,
         .executable = executable,
+        .library = library,
+        .compiler = library.artifact("flatzz"),
     };
+}
+
+/// Track discovery as well as file bytes so additions, removals, and edits rebuild.
+fn trackExamples(self: Self, command: *Step.Run, relative: []const u8) !void {
+    const builder = self.builder;
+    const root = self.library.path(relative);
+    builder.dependOnDirectoryContents(root);
+    const build_io = builder.graph.io;
+    var directory = try self.library.builder.root.openDir(build_io, relative, .{
+        .iterate = true,
+    });
+    defer directory.close(build_io);
+    var entries = directory.iterate();
+    while (try entries.next(build_io)) |entry| {
+        if (std.mem.startsWith(u8, entry.name, ".") or
+            std.mem.eql(u8, entry.name, "zig-out") or
+            std.mem.eql(u8, entry.name, "node_modules")) continue;
+        const source = root.path(builder, entry.name);
+        switch (entry.kind) {
+            .directory => try self.trackExamples(command, builder.fmt("{s}/{s}", .{
+                relative, entry.name,
+            })),
+            .file => command.addFileInput(source),
+            else => {},
+        }
+    }
+}
+
+/// Discover official examples and invoke the native compiler for Zig/JSON/BFBS output.
+/// Directory discovery and original file bytes are tracked; output stays in the cache.
+pub fn addCatalog(self: Self) Catalogue {
+    const generate = self.addRun(.catalog);
+    const directory = generate.addOutputDirectoryArg("examples");
+    self.trackExamples(generate, "example") catch @panic("cannot read official examples");
+
+    return .{ .directory = directory };
 }
 
 pub fn addSiteAssets(
     self: Self,
+    catalogue: Catalogue,
 ) Build.LazyPath {
     const builder = self.builder;
     const bundle = builder.addWriteFiles();
+    _ = bundle.addCopyDirectory(catalogue.directory, "examples", .{});
     return bundle.getDirectory();
 }
 
@@ -46,9 +101,14 @@ pub fn addRun(self: Self, command: Command) *Step.Run {
     runner.addArg(@tagName(command));
     runner.setCwd(self.builder.path("."));
     runner.has_side_effects = switch (command) {
+        .catalog => false,
         .build => true,
     };
     switch (command) {
+        .catalog => {
+            runner.addArtifactArg2(self.compiler, .{ .make_absolute = true });
+            runner.addDirectoryArg2(self.library.path("example"), .{ .make_absolute = true });
+        },
         .build => |assets| {
             runner.addArtifactArg2(assets.zine, .{ .make_absolute = true });
             runner.addDirectoryArg2(assets.bundle, .{ .make_absolute = true });
