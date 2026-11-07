@@ -30,7 +30,7 @@ pub fn init(builder: *Build) Self {
         .target = builder.graph.host,
         .optimize = .ReleaseSmall,
         .@"schema-tools" = true,
-        .@"wasm-compiler" = false,
+        .@"wasm-compiler" = true,
     });
     const executable = builder.addExecutable(.{
         .name = "flatzz-site",
@@ -92,6 +92,11 @@ pub fn addSiteAssets(
     const builder = self.builder;
     const bundle = builder.addWriteFiles();
     _ = bundle.addCopyDirectory(catalogue.directory, "examples", .{});
+    _ = bundle.addCopyFile(
+        self.library.artifact("flatzz-compiler-wasm").getEmittedBin(),
+        "assets/flatzz-compiler.wasm",
+    );
+    _ = bundle.addCopyFile(builder.path("wasm/compiler.mjs"), "assets/compiler.mjs");
     return bundle.getDirectory();
 }
 

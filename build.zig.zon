@@ -14,5 +14,5 @@
             .hash = "zine-0.14.1-ou6nIJKIFwBEjCLNI4Hryh9YWa73Rm_DCsypWHbEp5l8",
         },
     },
-    .paths = .{ "build.zig", "build.zig.zon", "zine.ziggy", "content", "layouts", "assets", "tools", "tests", "README.md" },
+    .paths = .{ "build.zig", "build.zig.zon", "zine.ziggy", "content", "layouts", "assets", "wasm", "tools", "tests", "README.md" },
 }

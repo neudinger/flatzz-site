@@ -20,3 +20,10 @@ test("the release publishes the official catalogue and source browser", () => {
   assert(catalogue.schemas.some(schema => schema.entry === "flatbuf/monster.fbs"));
   assert(catalogue.programs.some(program => program.key === "readme"));
 });
+
+test("the release includes the compiler, adapter, and browser worker", () => {
+  const compiler = fs.readFileSync("dist/assets/flatzz-compiler.wasm");
+  assert(WebAssembly.validate(compiler));
+  assert(fs.statSync("dist/assets/compiler.mjs").size > 0);
+  assert(fs.statSync("dist/assets/compiler-worker.js").size > 0);
+});

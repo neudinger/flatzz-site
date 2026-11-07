@@ -34,4 +34,13 @@ pub fn build(builder: *std.Build) void {
     discovery.addArtifactArg2(tools.executable, .{ .make_absolute = true });
     discovery.addArtifactArg2(tools.compiler, .{ .make_absolute = true });
     tests.dependOn(&discovery.step);
+    const compiler_wasm = tools.library.artifact("flatzz-compiler-wasm").getEmittedBin();
+    const contracts = tools.node("tests/wasm/compiler.cjs");
+    contracts.addFileArg(compiler_wasm);
+    contracts.addFileArg2(builder.path("wasm/compiler.mjs"), .{ .make_absolute = true });
+    contracts.addArtifactArg2(tools.compiler, .{ .make_absolute = true });
+    contracts.addArg(builder.graph.zig_exe);
+    contracts.addDirectoryArg2(tools.library.path("."), .{ .make_absolute = true });
+    contracts.addFileInput(builder.path("tests/wasm/worker.cjs"));
+    tests.dependOn(&contracts.step);
 }
