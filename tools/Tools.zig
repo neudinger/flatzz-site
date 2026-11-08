@@ -8,6 +8,7 @@ builder: *Build,
 executable: *Step.Compile,
 library: *Build.Dependency,
 compiler: *Step.Compile,
+target: Build.ResolvedTarget,
 
 /// Cache-backed official source and generated schema catalogue.
 pub const Catalogue = struct {
@@ -26,8 +27,9 @@ pub const Command = union(enum) {
 };
 
 pub fn init(builder: *Build) Self {
+    const target = builder.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding });
     const library = builder.dependency("flatzz", .{
-        .target = builder.graph.host,
+        .target = target,
         .optimize = .ReleaseSmall,
         .@"schema-tools" = true,
         .@"wasm-compiler" = true,
@@ -46,6 +48,7 @@ pub fn init(builder: *Build) Self {
         .executable = executable,
         .library = library,
         .compiler = library.artifact("flatzz"),
+        .target = target,
     };
 }
 
@@ -82,16 +85,60 @@ pub fn addCatalog(self: Self) Catalogue {
     const directory = generate.addOutputDirectoryArg("examples");
     self.trackExamples(generate, "example") catch @panic("cannot read official examples");
 
+    generate.addFileArg(self.builder.path("wasm/presets.json"));
     return .{ .directory = directory };
+}
+
+/// Compile the fixed-buffer demonstrations against the discovered generated schemas.
+pub fn addCompile(self: Self, catalogue: Catalogue) *Step.Compile {
+    const builder = self.builder;
+    const runtime = self.library.module("flatzz");
+    const module = builder.createModule(.{
+        .root_source_file = builder.path("wasm/main.zig"),
+        .target = self.target,
+        .optimize = .ReleaseSmall,
+        .imports = &.{.{ .name = "flatzz", .module = runtime }},
+    });
+    const presets = std.json.parseFromSlice(
+        std.json.Value,
+        builder.allocator,
+        @embedFile("../wasm/presets.json"),
+        .{},
+    ) catch @panic("invalid runtime presets");
+    var entries = presets.value.object.iterator();
+    while (entries.next()) |preset| {
+        const stem = preset.key_ptr.*[0 .. preset.key_ptr.len - ".fbs".len];
+        module.addImport(std.fs.path.basename(stem), builder.createModule(.{
+            .root_source_file = catalogue.directory.path(
+                builder,
+                builder.fmt("generated/{s}.zig", .{stem}),
+            ),
+            .target = self.target,
+            .optimize = .ReleaseSmall,
+            .imports = &.{.{ .name = "flatzz", .module = runtime }},
+        }));
+    }
+    module.export_symbol_names = &.{
+        "inputPointer",  "inputCapacity", "render", "framePointer", "frameLength",
+        "reportPointer", "reportLength",
+    };
+    const executable = builder.addExecutable(.{ .name = "flatzz-home", .root_module = module });
+    executable.entry = .disabled;
+    executable.export_memory = true;
+    executable.stack_size = 256 * 1024;
+    executable.max_memory = 1024 * 1024;
+    return executable;
 }
 
 pub fn addSiteAssets(
     self: Self,
     catalogue: Catalogue,
+    runtime: *Step.Compile,
 ) Build.LazyPath {
     const builder = self.builder;
     const bundle = builder.addWriteFiles();
     _ = bundle.addCopyDirectory(catalogue.directory, "examples", .{});
+    _ = bundle.addCopyFile(runtime.getEmittedBin(), "assets/runtime.wasm");
     _ = bundle.addCopyFile(
         self.library.artifact("flatzz-compiler-wasm").getEmittedBin(),
         "assets/flatzz-compiler.wasm",

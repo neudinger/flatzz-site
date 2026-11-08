@@ -21,9 +21,10 @@ pub fn build(builder: *std.Build) void {
     }).artifact("zine");
     const tools = Tools.init(builder);
     const catalog = tools.addCatalog();
+    const wasm = tools.addCompile(catalog);
     const release = tools.addRun(.{ .build = .{
         .zine = zine,
-        .bundle = tools.addSiteAssets(catalog),
+        .bundle = tools.addSiteAssets(catalog, wasm),
     } });
     builder.getInstallStep().dependOn(&release.step);
     const tests = builder.step("test", "Build and test the website");
@@ -43,4 +44,15 @@ pub fn build(builder: *std.Build) void {
     contracts.addDirectoryArg2(tools.library.path("."), .{ .make_absolute = true });
     contracts.addFileInput(builder.path("tests/wasm/worker.cjs"));
     tests.dependOn(&contracts.step);
+    const runtime = tools.node("tests/runtime.cjs");
+    runtime.addFileArg(wasm.getEmittedBin());
+    const compiler = tools.node("tests/compiler.cjs");
+    compiler.addFileArg(compiler_wasm);
+    compiler.addArg(builder.graph.zig_exe);
+    compiler.addDirectoryArg2(tools.library.path("."), .{ .make_absolute = true });
+    compiler.addDirectoryArg2(builder.path("dist"), .{ .make_absolute = true });
+    for ([_]*std.Build.Step.Run{ runtime, compiler }) |runner| {
+        runner.step.dependOn(&release.step);
+        tests.dependOn(&runner.step);
+    }
 }

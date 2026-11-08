@@ -1,0 +1,6 @@
+{
+  "flatbuf/reading.fbs": { "id": 0, "number": 42, "text": "sensor", "options": 0 },
+  "readme/rocket.fbs": { "id": 1, "number": 75, "text": "Ziguana", "options": 0 },
+  "flatbuf/mission/mission.fbs": { "id": 2, "number": 400, "text": "Lunar survey", "options": 0 },
+  "flatbuf/monster.fbs": { "id": 3, "number": 80, "text": "Orc", "options": 0 }
+}

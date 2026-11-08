@@ -27,3 +27,12 @@ test("the release includes the compiler, adapter, and browser worker", () => {
   assert(fs.statSync("dist/assets/compiler.mjs").size > 0);
   assert(fs.statSync("dist/assets/compiler-worker.js").size > 0);
 });
+
+test("the playground exposes all three conversions and fixed-buffer runtime", () => {
+  const home = fs.readFileSync("dist/index.html", "utf8");
+  for (const mode of ["fbs-zig", "fbs-json", "bfbs-zig"]) {
+    assert.match(home, new RegExp(`data-mode="${mode}"`));
+  }
+  assert.match(home, /data-runtime="\/flatzz-site\/assets\/runtime\.wasm"/);
+  assert(WebAssembly.validate(fs.readFileSync("dist/assets/runtime.wasm")));
+});

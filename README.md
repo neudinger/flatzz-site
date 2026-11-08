@@ -14,3 +14,5 @@ The generated release is written to `dist/`.
 The native build discovers examples from the pinned Flatzz package.
 
 The freestanding Wasm compiler runs locally in the browser.
+
+The playground supports FBS → Zig, FBS → JSON metadata, and BFBS → Zig.

@@ -8,15 +8,16 @@
   <title :text="$page.title"></title>
   <link rel="icon" type="image/png" href="$build.asset('assets/rocket-ziguana.png').link()">
   <link rel="stylesheet" href="$build.asset('assets/site.css').link()">
+  <ctx :if="$page.custom.get('kind').eql('home')"><script type="module" src="$build.asset('assets/site.js').link()"></script></ctx>
   <ctx :if="$page.custom.get('kind').eql('home').not()"><link rel="stylesheet" href="$build.asset('assets/reference.css').link()"></ctx>
   <ctx :if="$page.custom.get('kind').eql('examples')"><script type="module" src="$build.asset('assets/examples-page.js').link()"></script></ctx>
   <super>
 </head>
-<body data-page="$page.custom.get('kind')">
+<body data-runtime="$build.asset('assets/runtime.wasm').link()" data-page="$page.custom.get('kind')">
   <a class="skip-link" href="#site-content">Skip to the content</a>
   <header class="site-header"><div class="header-inner page-width">
     <a class="brand" href="$site.index().link()" aria-label="Flatzz home"><strong>flatzz</strong><span class="brand-separator">/</span><span class="brand-product">FlatBuffers for Zig</span></a>
-    <nav aria-label="Main navigation"><a href="$site.index().link()">Home</a><a href="$site.page('examples').link()" aria-current="$site.page('examples').isCurrent().then('page', 'false')">Examples</a><a href="$site.page('docs').link()" aria-current="$site.page('docs').isCurrent().then('page', 'false')">Documentation</a><a href="https://github.com/neudinger/flatzz">GitHub</a></nav>
+    <nav aria-label="Main navigation"><a href="$site.index().link().suffix('#playground')">Playground</a><a href="$site.page('examples').link()" aria-current="$site.page('examples').isCurrent().then('page', 'false')">Examples</a><a href="$site.page('docs').link()" aria-current="$site.page('docs').isCurrent().then('page', 'false')">Documentation</a><a href="https://github.com/neudinger/flatzz">GitHub</a></nav>
   </div></header>
   <main id="site-content"><super></main>
   <footer class="site-footer page-width"><span><strong>flatzz</strong> · FlatBuffers for Zig</span><span>Zig 0.17.0 · <a href="https://github.com/neudinger/flatzz">Source code</a> · <a href="https://zine-ssg.io/">Built with Zine</a></span></footer>

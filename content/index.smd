@@ -1,16 +1,104 @@
 ---
 .title = "flatzz — Define in FBS. Generate Zig.",
-.description = "FlatBuffers for Zig.",
+.description = "Compile FlatBuffers schemas into Zig. Explore every field through an interactive rocket and its real generated source.",
 .date = .date("2026-11-10T00:00:00"),
 .layout = "content.shtml",
 .custom = .{ .kind = "home" },
 ---
 ~~~=html
-<section class="landing-hero page-width" aria-labelledby="hero-heading">
-  <div class="intro-copy">
-    <h1 id="hero-heading">Define in FBS.<em>Generate Zig.</em></h1>
-    <p>Generate Zig types and operations from FlatBuffers schemas.</p>
-    <a class="secondary-link" href="docs/">Read the docs</a>
+<div id="top">
+    <section class="landing-hero page-width" aria-labelledby="hero-heading">
+      <div class="intro-copy">
+        <h1 id="hero-heading">Define in FBS.<em>Generate Zig.</em></h1>
+        <p>Edit your schema.<br>Generate typed Zig, live.<br>Explore every field.</p>
+        <div class="hero-actions"><a class="primary-link" href="#playground">Explore the examples</a><a class="secondary-link" href="docs/">Read the docs</a></div>
+        <p class="rocket-legend" id="rocket-legend"><span>Stages: schema fields</span><span>Payloads: borrowed bytes</span></p>
+      </div>
+      <figure id="schema-rocket" class="schema-rocket" aria-label="Interactive rocket for the current FlatBuffers schema" aria-describedby="rocket-legend">
+        <div class="rocket-viewport"><div class="rocket-stage"><canvas class="schema-rocket-canvas" aria-hidden="true"></canvas><div class="rocket-labels" role="group" aria-label="Rocket stages"></div></div></div>
+        <p class="rocket-summary sr-only">The rocket will appear after the generated Zig runtime loads.</p>
+        <figcaption class="rocket-selection">
+          <nav class="rocket-path" aria-label="Selected schema field path"></nav>
+          <button class="rocket-toggle" type="button" aria-pressed="true">Assemble rocket</button>
+          <p class="rocket-detail" aria-live="polite">Preparing the generated schema…</p>
+          <p class="rocket-caption">Loading rocket…</p>
+        </figcaption>
+      </figure>
+    </section>
+
+    <section id="playground" class="home-showcase page-width wrap-code" aria-label="Flatzz compiler playground">
+      <div class="playground-modes" role="tablist" aria-label="Compiler playground">
+        <button id="mode-fbs-zig" type="button" role="tab" data-mode="fbs-zig" aria-controls="compiler-workspace" aria-selected="true" disabled>FBS → Zig</button>
+        <button id="mode-fbs-json" type="button" role="tab" data-mode="fbs-json" aria-controls="compiler-workspace" aria-selected="false" tabindex="-1" disabled>FBS → JSON</button>
+        <button id="mode-bfbs-zig" type="button" role="tab" data-mode="bfbs-zig" aria-controls="compiler-workspace" aria-selected="false" tabindex="-1" disabled>BFBS → Zig</button>
+      </div>
+      <div id="compiler-workspace" role="tabpanel" aria-labelledby="mode-fbs-zig">
+      <div class="example-toolbar">
+        <div class="motion-controls"><button type="button" id="motion-button" aria-pressed="true">Pause motion</button><span id="motion-status">Interactive canvas</span></div>
+        <div class="example-navigation" role="group" aria-label="Example navigation">
+          <button type="button" id="previous-example" aria-label="Previous example" disabled>Previous</button>
+          <label class="example-picker"><span class="sr-only">Try a schema</span><select id="example-select" aria-label="Try a schema" disabled><option>Loading official examples…</option></select></label>
+          <button type="button" id="next-example" aria-label="Next example" disabled>Next</button>
+        </div>
+      </div>
+      <div class="code-reading-controls" role="group" aria-label="Code reading preferences">
+        <label>Code size <select id="code-size" aria-label="Code font size"><option value="14">14px</option><option value="16" selected>Default (16px)</option><option value="18">18px</option><option value="20">20px</option></select></label>
+        <label><input id="code-wrap" type="checkbox" checked>Wrap lines</label>
+        <span id="editor-help" class="source-hint">Edit FBS to update Zig and the rocket. Select a stage to inspect a field.</span>
+      </div>
+      <div id="source-project" class="source-project">
+        <div id="source-tabs" class="source-tabs" role="group" aria-label="Schema files"></div>
+        <div class="project-actions"><label>Main schema <select id="entry-file" aria-label="Main schema file"></select></label>
+          <button id="open-fbs" type="button" disabled>Open FBS files</button>
+          <input id="fbs-files" type="file" accept=".fbs,text/plain" multiple hidden>
+        </div>
+      </div>
+      <div class="code-pair">
+        <section class="code-panel input-pane" aria-labelledby="schema-heading">
+          <header class="panel-header"><h2 id="schema-heading">rocket.fbs</h2><span id="input-kind">EDITABLE FBS</span></header>
+          <div id="schema-editor-shell" class="schema-editor-shell">
+            <div id="schema-code" class="source-code" aria-hidden="true"><div class="code-line">Loading schema…</div></div>
+            <textarea id="schema-editor" aria-label="FlatBuffers schema editor" aria-describedby="editor-help runtime-error" maxlength="1048576" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off" wrap="soft" disabled></textarea>
+          </div>
+          <div id="binary-input" class="binary-input" hidden>
+            <span class="binary-icon" aria-hidden="true">{ }</span>
+            <p id="binary-status">Example binary schema</p>
+            <strong id="binary-name">rocket.bfbs</strong>
+            <span id="binary-size"></span>
+            <button id="open-bfbs" type="button" disabled>Choose BFBS file</button>
+            <input id="bfbs-file" type="file" accept=".bfbs,application/octet-stream" hidden>
+            <p>Import a binary schema.<br>Generate Zig locally.</p>
+          </div>
+        </section>
+        <section class="code-panel" aria-labelledby="generated-heading">
+          <header class="panel-header"><h2 id="generated-heading">rocket.zig</h2><span id="output-kind">GENERATED ZIG</span></header>
+          <div id="generated-code" class="source-code" tabindex="0" aria-label="Generated Zig code, read only"><div class="code-line">Loading generated Zig…</div></div>
+        </section>
+      </div>
+      <p id="runtime-error" class="error-message" role="alert" hidden></p>
+      <div class="example-context"><span id="example-position">—</span><p id="example-description">Official schemas from flatzz/example.</p><span id="engine-status" role="status">Loading Zig runtime…</span></div>
+      <div class="example-footer"><div class="example-actions"><button type="button" id="copy-button" disabled>Copy Zig</button><button type="button" id="download-button" disabled>Download Zig</button><button type="button" id="reset-button" disabled>Reset schema</button></div><p>Compiled locally in your browser.</p></div>
+      <section id="usage-example" class="usage-example" aria-labelledby="usage-heading">
+        <div class="usage-intro"><div><h2 id="usage-heading">Use the generated code.</h2><p>Create → serialize → print. Receive → read → edit → print.</p></div><button id="copy-usage" type="button" disabled>Copy example</button></div>
+        <div class="code-panel usage-panel">
+          <header class="panel-header"><h3>main.zig</h3><span id="usage-status">FOLLOWS YOUR SCHEMA</span></header>
+          <div id="usage-code" class="source-code" tabindex="0" aria-label="Zig creation, serialization, reading and update example"><div class="code-line">Preparing usage example…</div></div>
+        </div>
+        <p id="usage-note" class="usage-note">Comptime-sized serialization and borrowed reads. No allocator required.</p>
+      </section>
+      <section class="official-examples" aria-labelledby="official-heading">
+        <div class="usage-intro"><div><h2 id="official-heading">Official Zig examples.</h2><p>Source files from flatzz/example, included with this build. <a href="examples/">Read all examples →</a></p></div><a href="examples/README.md" download>Example guide</a></div>
+        <div id="official-programs" class="official-programs"></div>
+      </section>
+      </div>
+    </section>
+
+    <section id="how-it-works" class="generation-flow page-width" aria-label="How Flatzz works">
+      <article><span>01</span><h2>Define</h2><p>Describe your data in a FlatBuffers schema.</p></article>
+      <article><span>02</span><h2>Generate</h2><p>Compile the schema into native types and typed operations.</p></article>
+      <article><span>03</span><h2>Borrow</h2><p>Serialize into your buffer. Read strings and vectors from its bytes.</p></article>
+      <aside><a href="docs/">Understand the runtime</a><p>Fixed-buffer Zig serialization uses no heap allocator. Your application owns any file mapping.</p></aside>
+    </section>
+    <p class="scope-note page-width">The real Flatzz compiler runs in your browser. Edit or open linked FBS files, inspect schema JSON, or import BFBS. The compiler uses a bounded workspace; schema JSON describes declarations, not message data. Rocket stages represent logical fields. Original presets show verified byte offsets; edited schemas show declarations. Generated usage is source code, not executed in the browser. Fixed-buffer Zig serialization needs no allocator; browser compilation and the interface use memory.</p>
   </div>
-</section>
 ~~~

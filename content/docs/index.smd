@@ -13,3 +13,7 @@ schemas. The runtime serializes values and borrows views of their backing bytes.
 ~~~=html
 <p>Browse the <a href="../examples/">official examples</a> to see complete Zig projects.</p>
 ~~~
+
+~~~=html
+<p>Try schema editing and fixed-buffer demonstrations in the <a href="../#playground">playground</a>.</p>
+~~~
