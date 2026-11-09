@@ -1,19 +1,19 @@
 ---
 .title = "Documentation — flatzz",
-.description = "Generate typed Zig from FlatBuffers schemas.",
+.description = "API contracts and official examples from the Flatzz library. Explore native values, caller-owned storage, and borrowed views.",
 .date = .date("2026-11-10T00:00:00"),
 .layout = "content.shtml",
 .custom = .{ .kind = "docs" },
 ---
-# Flatzz documentation
-
-Use the Flatzz compiler to generate Zig types and operations from FlatBuffers
-schemas. The runtime serializes values and borrows views of their backing bytes.
-
 ~~~=html
-<p>Browse the <a href="../examples/">official examples</a> to see complete Zig projects.</p>
-~~~
-
-~~~=html
-<p>Try schema editing and fixed-buffer demonstrations in the <a href="../#playground">playground</a>.</p>
+<div id="content" class="docs-overview page-width">
+    <header class="reference-intro"><span class="reference-eyebrow">DOCUMENTATION</span><h1>Generate Zig.<br>Own the bytes.</h1><p>API contracts and examples from the Flatzz library. Explore native values, caller-owned storage, and borrowed views.</p></header>
+    <div class="docs-cards">
+      <a class="docs-card" href="api/runtime/"><h2>Runtime API</h2><p>Serialize, verify, read, and update. Follow ownership and lifetime contracts through the public declarations.</p><span>Explore the runtime →</span></a>
+      <a class="docs-card" href="api/compiler/"><h2>Compiler API</h2><p>Parse FBS and work with reflection metadata, JSON, and binary schemas.</p><span>Explore the compiler →</span></a>
+      <a class="docs-card" href="../examples/"><h2>Official examples</h2><p>Read complete Zig projects, their build files, and linked schemas. Copy or download the original source.</p><span>Read the examples →</span></a>
+      <a class="docs-card" href="../#playground"><h2>Live playground</h2><p>Edit FBS to generate Zig or schema JSON. Import BFBS and inspect schema fields.</p><span>Open the playground →</span></a>
+    </div>
+    <section class="reference-article"><h2>From library to website</h2><p>This website generates both API references from Flatzz’s public Zig modules and discovers official examples from its <code>example/</code> directory. <code>zig build docs</code> and <code>zig build examples</code> refresh these website sections.</p><p>Download the library guides: <a href="downloads/examples.md" download>Copyable examples</a> · <a href="downloads/wasm.md" download>WebAssembly compiler</a>.</p><p>Serialization accepts an allocator or an aligned buffer sized with <code>comptime flatzz.storage.capacityFor</code>. Keep backing storage alive while using borrowed views.</p></section>
+  </div>
 ~~~

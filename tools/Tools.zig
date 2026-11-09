@@ -15,6 +15,12 @@ pub const Catalogue = struct {
     directory: Build.LazyPath,
 };
 
+/// Compiler-owned raw viewers and site-owned fragments, both in the build cache.
+pub const Documentation = struct {
+    raw_directory: Build.LazyPath,
+    prepared_directory: Build.LazyPath,
+};
+
 /// Engine and generated assets for the release.
 pub const SiteAssets = struct {
     zine: *Step.Compile,
@@ -24,6 +30,7 @@ pub const SiteAssets = struct {
 pub const Command = union(enum) {
     build: SiteAssets,
     catalog,
+    @"prepare-api": Build.LazyPath,
 };
 
 pub fn init(builder: *Build) Self {
@@ -130,20 +137,83 @@ pub fn addCompile(self: Self, catalogue: Catalogue) *Step.Compile {
     return executable;
 }
 
+/// Emit the public APIs directly, then apply the site shell to Zig's standard viewer.
+/// As in zast-site, the site owns preparation and reads guides from the library checkout.
+pub fn addApiDocumentation(self: Self) Documentation {
+    const builder = self.builder;
+    const host = builder.dependency("flatzz", .{
+        .target = builder.graph.host,
+        .optimize = .Debug,
+        .@"schema-tools" = false,
+        .@"wasm-compiler" = false,
+    });
+    const runtime = builder.addObject(.{
+        .name = "runtime",
+        .root_module = host.module("flatzz"),
+    });
+    const compiler = builder.addObject(.{
+        .name = "compiler",
+        .root_module = host.module("flatzz_compiler"),
+    });
+    const bundle = builder.addWriteFiles();
+    _ = bundle.addCopyDirectory(runtime.getEmittedDocs(), ".", .{});
+    _ = bundle.addCopyDirectory(compiler.getEmittedDocs(), "compiler", .{});
+    _ = bundle.addCopyFile(self.library.path("README.md"), "guides/README.md");
+    _ = bundle.addCopyFile(self.library.path("docs/examples.md"), "guides/examples.md");
+    _ = bundle.addCopyFile(self.library.path("docs/wasm.md"), "guides/wasm.md");
+    _ = bundle.addCopyDirectory(self.library.path("docs/assets"), "guides/assets", .{});
+    const directory = bundle.getDirectory();
+    const prepare = self.addRun(.{ .@"prepare-api" = directory });
+    const prepared = prepare.addOutputDirectoryArg("reference");
+    for ([_][]const u8{ "", "compiler/" }) |prefix| {
+        for ([_][]const u8{ "index.html", "main.js", "main.wasm", "sources.tar" }) |name| {
+            prepare.addFileInput(directory.path(builder, builder.fmt("{s}{s}", .{ prefix, name })));
+        }
+    }
+    return .{
+        .raw_directory = directory,
+        .prepared_directory = prepared,
+    };
+}
+
 pub fn addSiteAssets(
     self: Self,
     catalogue: Catalogue,
+    documentation: Documentation,
     runtime: *Step.Compile,
 ) Build.LazyPath {
     const builder = self.builder;
     const bundle = builder.addWriteFiles();
     _ = bundle.addCopyDirectory(catalogue.directory, "examples", .{});
+    _ = bundle.addCopyDirectory(
+        documentation.raw_directory.path(builder, "guides"),
+        "docs/downloads",
+        .{},
+    );
     _ = bundle.addCopyFile(runtime.getEmittedBin(), "assets/runtime.wasm");
     _ = bundle.addCopyFile(
         self.library.artifact("flatzz-compiler-wasm").getEmittedBin(),
         "assets/flatzz-compiler.wasm",
     );
     _ = bundle.addCopyFile(builder.path("wasm/compiler.mjs"), "assets/compiler.mjs");
+    for ([_][]const u8{ "runtime", "compiler" }) |name| {
+        for ([_][]const u8{ "head", "body" }) |fragment| {
+            _ = bundle.addCopyFile(
+                documentation.prepared_directory.path(builder, builder.fmt("{s}/{s}.html", .{
+                    name, fragment,
+                })),
+                builder.fmt("_partials/{s}-api-{s}.html", .{ name, fragment }),
+            );
+        }
+        for ([_][]const u8{ "main.js", "main.wasm", "sources.tar.gz" }) |filename| {
+            _ = bundle.addCopyFile(
+                documentation.prepared_directory.path(builder, builder.fmt("{s}/{s}", .{
+                    name, filename,
+                })),
+                builder.fmt("docs/api/{s}/{s}", .{ name, filename }),
+            );
+        }
+    }
     return bundle.getDirectory();
 }
 
@@ -153,13 +223,16 @@ pub fn addRun(self: Self, command: Command) *Step.Run {
     runner.addArg(@tagName(command));
     runner.setCwd(self.builder.path("."));
     runner.has_side_effects = switch (command) {
-        .catalog => false,
+        .catalog, .@"prepare-api" => false,
         .build => true,
     };
     switch (command) {
         .catalog => {
             runner.addArtifactArg2(self.compiler, .{ .make_absolute = true });
             runner.addDirectoryArg2(self.library.path("example"), .{ .make_absolute = true });
+        },
+        .@"prepare-api" => |directory| {
+            runner.addDirectoryArg2(directory, .{ .make_absolute = true });
         },
         .build => |assets| {
             runner.addArtifactArg2(assets.zine, .{ .make_absolute = true });

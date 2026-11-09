@@ -1,0 +1,23 @@
+<extend template="base.shtml">
+<head id="site-head">
+  <ctx :if="$page.custom.get('api').eql('runtime')" :html="$build.asset('_partials/runtime-api-head.html').bytes()"></ctx>
+  <ctx :if="$page.custom.get('api').eql('compiler')" :html="$build.asset('_partials/compiler-api-head.html').bytes()"></ctx>
+</head>
+<main id="site-content">
+  <div class="reference-layout page-width">
+    <aside class="reference-sidebar"><nav aria-label="Documentation">
+      <a href="../../">Overview</a><a href="../runtime/">Runtime API</a><a href="../compiler/">Compiler API</a><a href="../../../examples/">Official examples</a>
+    </nav><p>On this page</p><nav id="reference-outline" aria-label="On this page"></nav></aside>
+    <section id="reference" class="api-reference wrap-code">
+      <header class="reference-intro"><span class="reference-eyebrow">API REFERENCE</span><h1 :text="$page.custom.get('heading')"></h1><p :text="$page.description"></p></header>
+      <div class="reference-options" role="group" aria-label="Code reading preferences">
+        <label>Code size <select id="reference-size"><option value="14">14px</option><option value="16" selected>16px</option><option value="18">18px</option><option value="20">20px</option></select></label>
+        <label><input type="checkbox" id="reference-wrap" checked>Wrap lines</label>
+      </div>
+      <div class="compiler-reference">
+        <ctx :if="$page.custom.get('api').eql('runtime')" :html="$build.asset('_partials/runtime-api-body.html').bytes()"></ctx>
+        <ctx :if="$page.custom.get('api').eql('compiler')" :html="$build.asset('_partials/compiler-api-body.html').bytes()"></ctx>
+      </div>
+    </section>
+  </div>
+</main>

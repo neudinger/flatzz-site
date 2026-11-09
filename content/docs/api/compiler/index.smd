@@ -1,0 +1,7 @@
+---
+.title = "Compiler API — flatzz",
+.description = "Parse FBS, inspect schema metadata, and encode or decode BFBS.",
+.date = .date("2026-11-10T00:00:00"),
+.layout = "api.shtml",
+.custom = .{ .kind = "api", .api = "compiler", .heading = "Compiler API" },
+---

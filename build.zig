@@ -22,9 +22,10 @@ pub fn build(builder: *std.Build) void {
     const tools = Tools.init(builder);
     const catalog = tools.addCatalog();
     const wasm = tools.addCompile(catalog);
+    const api = tools.addApiDocumentation();
     const release = tools.addRun(.{ .build = .{
         .zine = zine,
-        .bundle = tools.addSiteAssets(catalog, wasm),
+        .bundle = tools.addSiteAssets(catalog, api, wasm),
     } });
     builder.getInstallStep().dependOn(&release.step);
     const tests = builder.step("test", "Build and test the website");
@@ -55,4 +56,10 @@ pub fn build(builder: *std.Build) void {
         runner.step.dependOn(&release.step);
         tests.dependOn(&runner.step);
     }
+    const docs = tools.node("tests/documentation.cjs");
+    docs.addArtifactArg2(tools.executable, .{ .make_absolute = true });
+    docs.addDirectoryArg2(api.raw_directory, .{ .make_absolute = true });
+    docs.addDirectoryArg2(builder.path("dist"), .{ .make_absolute = true });
+    docs.step.dependOn(&release.step);
+    tests.dependOn(&docs.step);
 }
