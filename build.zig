@@ -1,11 +1,10 @@
 //! zvm-lock: 0.17.0
 //! Coordinate Zine, the library compiler, official examples, and themed API references.
 const std = @import("std");
-const manifest = @import("build.zig.zon");
 const Tools = @import("tools/Tools.zig");
 
 comptime {
-    const required_version = manifest.minimum_zig_version;
+    const required_version = @import("build.zig.zon").minimum_zig_version;
     if (!std.mem.eql(u8, @import("builtin").zig_version_string, required_version)) {
         @compileError("This site requires Zig " ++ required_version ++
             "; run `zvm run " ++ required_version ++ " build`.");
@@ -23,43 +22,58 @@ pub fn build(builder: *std.Build) void {
     const catalog = tools.addCatalog();
     const wasm = tools.addCompile(catalog);
     const api = tools.addApiDocumentation();
-    const release = tools.addRun(.{ .build = .{
+    const assets: Tools.SiteAssets = .{
         .zine = zine,
         .bundle = tools.addSiteAssets(catalog, api, wasm),
-    } });
+    };
+    const release = tools.addRun(.{ .build = assets }, &.{});
+    const preview = tools.addRun(.{ .serve = assets }, &.{});
+    const clean = tools.addRun(.clean, &.{});
+    const tests = tools.addTests(wasm, api, assets, &release.step);
+    // Default build -> prepared library content + native Zine release + validation.
     builder.getInstallStep().dependOn(&release.step);
-    const tests = builder.step("test", "Build and test the website");
-    const published = tools.node("tests/stage.cjs");
-    published.step.dependOn(&release.step);
-    tests.dependOn(&published.step);
-    const discovery = tools.node("tests/catalogue.cjs");
-    discovery.addArtifactArg2(tools.executable, .{ .make_absolute = true });
-    discovery.addArtifactArg2(tools.compiler, .{ .make_absolute = true });
-    tests.dependOn(&discovery.step);
-    const compiler_wasm = tools.library.artifact("flatzz-compiler-wasm").getEmittedBin();
-    const contracts = tools.node("tests/wasm/compiler.cjs");
-    contracts.addFileArg(compiler_wasm);
-    contracts.addFileArg2(builder.path("wasm/compiler.mjs"), .{ .make_absolute = true });
-    contracts.addArtifactArg2(tools.compiler, .{ .make_absolute = true });
-    contracts.addArg(builder.graph.zig_exe);
-    contracts.addDirectoryArg2(tools.library.path("."), .{ .make_absolute = true });
-    contracts.addFileInput(builder.path("tests/wasm/worker.cjs"));
-    tests.dependOn(&contracts.step);
-    const runtime = tools.node("tests/runtime.cjs");
-    runtime.addFileArg(wasm.getEmittedBin());
-    const compiler = tools.node("tests/compiler.cjs");
-    compiler.addFileArg(compiler_wasm);
-    compiler.addArg(builder.graph.zig_exe);
-    compiler.addDirectoryArg2(tools.library.path("."), .{ .make_absolute = true });
-    compiler.addDirectoryArg2(builder.path("dist"), .{ .make_absolute = true });
-    for ([_]*std.Build.Step.Run{ runtime, compiler }) |runner| {
-        runner.step.dependOn(&release.step);
-        tests.dependOn(&runner.step);
+
+    inline for (.{
+        .{
+            .tag = .clean,
+            .description = "Remove the generated release without rebuilding it",
+            .prerequisites = .{&clean.step},
+        },
+        .{
+            .tag = .docs,
+            .description = "Generate and theme both API references and copy the library guides",
+            .prerequisites = .{&release.step},
+        },
+        .{
+            .tag = .examples,
+            .description = "Discover official examples and prepare the source browser",
+            .prerequisites = .{&release.step},
+        },
+        .{
+            .tag = .wasm,
+            .description = "Build the compiler and runtime playground assets",
+            .prerequisites = .{ &wasm.step, &tools.library.artifact("flatzz-compiler-wasm").step },
+        },
+        .{
+            .tag = .@"test-wasm",
+            .description = "Test the compiler ABI, native parity, and Wasm-generated Zig",
+            .prerequisites = .{tests.wasm},
+        },
+        .{
+            .tag = .@"test",
+            .description = "Test playgrounds, APIs, official examples, and fixed-buffer runtime",
+            .prerequisites = .{
+                tests.content,       tests.runtime, tests.compiler, tests.catalogue,
+                tests.documentation, tests.wasm,
+            },
+        },
+        .{
+            .tag = .serve,
+            .description = "Preview with live reload at http://127.0.0.1:1991/",
+            .prerequisites = .{&preview.step},
+        },
+    }) |command| {
+        const step = builder.step(@tagName(command.tag), command.description);
+        inline for (command.prerequisites) |prerequisite| step.dependOn(prerequisite);
     }
-    const docs = tools.node("tests/documentation.cjs");
-    docs.addArtifactArg2(tools.executable, .{ .make_absolute = true });
-    docs.addDirectoryArg2(api.raw_directory, .{ .make_absolute = true });
-    docs.addDirectoryArg2(builder.path("dist"), .{ .make_absolute = true });
-    docs.step.dependOn(&release.step);
-    tests.dependOn(&docs.step);
 }

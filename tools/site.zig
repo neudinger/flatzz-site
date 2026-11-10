@@ -1,18 +1,30 @@
-//! Run the Zine release and prepare its build-owned inputs.
+//! Native Zine release and preview coordinator; browser tooling remains site-owned.
 const std = @import("std");
-const catalog = @import("catalog.zig");
 const api = @import("api.zig");
-const website = @import("website.zig");
+const catalog = @import("catalog.zig");
+pub const website = @import("website.zig");
+pub const files = @import("files.zig");
+
+pub const std_options: std.Options = .{ .log_level = .warn };
+
+/// Remove the generated website while preserving sources and compiler caches.
+pub fn clean(io: std.Io, directory: std.Io.Dir) !void {
+    try directory.deleteTree(io, "dist");
+}
 
 pub fn main(init: std.process.Init) !void {
     var arena = std.heap.ArenaAllocator.init(init.gpa);
     defer arena.deinit();
     const allocator = arena.allocator();
     const arguments = try init.minimal.args.toSlice(allocator);
-    const Command = enum { build, catalog, @"prepare-api" };
+    const Command = enum { clean, catalog, @"prepare-api", build, serve };
     if (arguments.len < 2) return error.ExpectedCommand;
     const command = std.meta.stringToEnum(Command, arguments[1]) orelse return error.UnknownCommand;
     switch (command) {
+        .clean => {
+            if (arguments.len != 2) return error.UnexpectedArguments;
+            try clean(init.io, .cwd());
+        },
         .catalog => {
             if (arguments.len < 5 or arguments.len > 6)
                 return error.ExpectedCompilerExamplesOutputAndOptionalPresets;
@@ -29,11 +41,21 @@ pub fn main(init: std.process.Init) !void {
             if (arguments.len != 4) return error.ExpectedDocumentationInputAndOutput;
             try api.prepare(init.gpa, init.io, arguments[2], arguments[3]);
         },
-        .build => {
-            if (arguments.len != 4) return error.ExpectedZineAndBundlePaths;
-            try website.build(allocator, init.io, .{
+        .build, .serve => {
+            if (arguments.len < 4 or arguments.len > 5) return error.ExpectedZineAndBundlePaths;
+            var options: website.Options = .{
                 .zine_executable = arguments[2],
                 .bundle_directory = arguments[3],
+            };
+            if (command == .serve) {
+                if (arguments.len == 5)
+                    options.port = try std.fmt.parseInt(u16, arguments[4], 10);
+                return website.serve(allocator, init.io, options);
+            }
+            if (arguments.len == 5) options.output_directory = arguments[4];
+            const result = try website.build(allocator, init.io, options);
+            std.debug.print("Built {d} pages with {d} local references using Zine.\n", .{
+                result.pages, result.references,
             });
         },
     }

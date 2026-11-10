@@ -1,13 +1,15 @@
-//! Wire native site preparation to the website build.
+//! Declare native Zine commands, public library artifacts, and browser test runners.
+//! The root build owns named commands and prerequisites. The native coordinator
+//! validates release output and runs the live server; generated content stays cached.
 const std = @import("std");
 const Build = std.Build;
 const Step = Build.Step;
 const Self = @This();
 
 builder: *Build,
-executable: *Step.Compile,
 library: *Build.Dependency,
 compiler: *Step.Compile,
+executable: *Step.Compile,
 target: Build.ResolvedTarget,
 
 /// Cache-backed official source and generated schema catalogue.
@@ -21,18 +23,31 @@ pub const Documentation = struct {
     prepared_directory: Build.LazyPath,
 };
 
-/// Engine and generated assets for the release.
+/// Identical engine and generated assets for a release and live preview.
 pub const SiteAssets = struct {
     zine: *Step.Compile,
     bundle: Build.LazyPath,
 };
 
+/// Native coordinator command; paths and artifacts are owned by the build graph.
 pub const Command = union(enum) {
-    build: SiteAssets,
+    clean,
     catalog,
     @"prepare-api": Build.LazyPath,
+    build: SiteAssets,
+    serve: SiteAssets,
 };
 
+pub const Tests = struct {
+    content: *Step,
+    runtime: *Step,
+    compiler: *Step,
+    catalogue: *Step,
+    documentation: *Step,
+    wasm: *Step,
+};
+
+/// Resolve the Zig dependency once; website inputs and tooling stay in this project.
 pub fn init(builder: *Build) Self {
     const target = builder.resolveTargetQuery(.{ .cpu_arch = .wasm32, .os_tag = .freestanding });
     const library = builder.dependency("flatzz", .{
@@ -88,7 +103,7 @@ fn trackExamples(self: Self, command: *Step.Run, relative: []const u8) !void {
 /// Discover official examples and invoke the native compiler for Zig/JSON/BFBS output.
 /// Directory discovery and original file bytes are tracked; output stays in the cache.
 pub fn addCatalog(self: Self) Catalogue {
-    const generate = self.addRun(.catalog);
+    const generate = self.addRun(.catalog, &.{});
     const directory = generate.addOutputDirectoryArg("examples");
     self.trackExamples(generate, "example") catch @panic("cannot read official examples");
 
@@ -163,7 +178,7 @@ pub fn addApiDocumentation(self: Self) Documentation {
     _ = bundle.addCopyFile(self.library.path("docs/wasm.md"), "guides/wasm.md");
     _ = bundle.addCopyDirectory(self.library.path("docs/assets"), "guides/assets", .{});
     const directory = bundle.getDirectory();
-    const prepare = self.addRun(.{ .@"prepare-api" = directory });
+    const prepare = self.addRun(.{ .@"prepare-api" = directory }, &.{});
     const prepared = prepare.addOutputDirectoryArg("reference");
     for ([_][]const u8{ "", "compiler/" }) |prefix| {
         for ([_][]const u8{ "index.html", "main.js", "main.wasm", "sources.tar" }) |name| {
@@ -176,6 +191,7 @@ pub fn addApiDocumentation(self: Self) Documentation {
     };
 }
 
+/// Assemble only generated assets. Zine owns pages, shared layouts, and static assets.
 pub fn addSiteAssets(
     self: Self,
     catalogue: Catalogue,
@@ -217,16 +233,18 @@ pub fn addSiteAssets(
     return bundle.getDirectory();
 }
 
-pub fn addRun(self: Self, command: Command) *Step.Run {
+/// Schedule native release/preview using the same artifact paths and generated bundle.
+pub fn addRun(self: Self, command: Command, dependencies: []const *Step) *Step.Run {
     // Keep the cache input path stable when installation and preparation run in parallel.
     const runner = self.builder.addRunFile(self.executable.getEmittedBin());
     runner.addArg(@tagName(command));
     runner.setCwd(self.builder.path("."));
     runner.has_side_effects = switch (command) {
         .catalog, .@"prepare-api" => false,
-        .build => true,
+        .clean, .build, .serve => true,
     };
     switch (command) {
+        .clean => {},
         .catalog => {
             runner.addArtifactArg2(self.compiler, .{ .make_absolute = true });
             runner.addDirectoryArg2(self.library.path("example"), .{ .make_absolute = true });
@@ -234,15 +252,81 @@ pub fn addRun(self: Self, command: Command) *Step.Run {
         .@"prepare-api" => |directory| {
             runner.addDirectoryArg2(directory, .{ .make_absolute = true });
         },
-        .build => |assets| {
+        .build, .serve => |assets| {
             runner.addArtifactArg2(assets.zine, .{ .make_absolute = true });
             runner.addDirectoryArg2(assets.bundle, .{ .make_absolute = true });
         },
     }
+    for (dependencies) |dependency| runner.step.dependOn(dependency);
     return runner;
 }
 
-pub fn node(self: Self, script: []const u8) *Step.Run {
+/// Test the complete release, native failure boundaries, and public compiler/runtime ABIs.
+pub fn addTests(
+    self: Self,
+    wasm: *Step.Compile,
+    documentation: Documentation,
+    assets: SiteAssets,
+    release: *Step,
+) Tests {
+    const builder = self.builder;
+    const paths = builder.addOptions();
+    paths.addOptionPath("zine_executable", assets.zine.getEmittedBin());
+    const interrupted = builder.addExecutable(.{
+        .name = "interrupted-engine",
+        .root_module = builder.createModule(.{
+            .root_source_file = builder.path("tests/interrupted_engine.zig"),
+            .target = builder.graph.host,
+            .optimize = .ReleaseSafe,
+        }),
+    });
+    paths.addOptionPath("interrupted_engine", interrupted.getEmittedBin());
+    const content_module = builder.createModule(.{
+        .root_source_file = builder.path("tests/site.zig"),
+        .target = builder.graph.host,
+        .optimize = .Debug,
+    });
+    content_module.addOptions("paths", paths);
+    content_module.addImport("site", self.executable.root_module);
+    const content = builder.addRunArtifact(builder.addTest(.{ .root_module = content_module }));
+    content.step.dependOn(release);
+    const directory = builder.path("dist");
+    const compiler_wasm = self.library.artifact("flatzz-compiler-wasm").getEmittedBin();
+    const runtime = self.node("tests/runtime.cjs");
+    runtime.addFileArg(wasm.getEmittedBin());
+    const compiler = self.node("tests/compiler.cjs");
+    compiler.addFileArg(compiler_wasm);
+    compiler.addArg(builder.graph.zig_exe);
+    compiler.addDirectoryArg2(self.library.path("."), .{ .make_absolute = true });
+    compiler.addDirectoryArg2(directory, .{ .make_absolute = true });
+    const catalogue = self.node("tests/catalogue.cjs");
+    catalogue.addArtifactArg2(self.executable, .{ .make_absolute = true });
+    catalogue.addArtifactArg2(self.compiler, .{ .make_absolute = true });
+    const api = self.node("tests/documentation.cjs");
+    api.addArtifactArg2(self.executable, .{ .make_absolute = true });
+    api.addDirectoryArg2(documentation.raw_directory, .{ .make_absolute = true });
+    api.addDirectoryArg2(directory, .{ .make_absolute = true });
+    const contracts = self.node("tests/wasm/compiler.cjs");
+    contracts.addFileArg(compiler_wasm);
+    contracts.addFileArg2(builder.path("wasm/compiler.mjs"), .{ .make_absolute = true });
+    contracts.addArtifactArg2(self.compiler, .{ .make_absolute = true });
+    contracts.addArg(builder.graph.zig_exe);
+    contracts.addDirectoryArg2(self.library.path("."), .{ .make_absolute = true });
+    contracts.addFileInput(builder.path("tests/wasm/worker.cjs"));
+    for ([_]*Step.Run{ runtime, compiler, catalogue, api }) |runner| {
+        runner.step.dependOn(release);
+    }
+    return .{
+        .content = &content.step,
+        .runtime = &runtime.step,
+        .compiler = &compiler.step,
+        .catalogue = &catalogue.step,
+        .documentation = &api.step,
+        .wasm = &contracts.step,
+    };
+}
+
+fn node(self: Self, script: []const u8) *Step.Run {
     const command = self.builder.addSystemCommand(&.{"node"});
     command.addFileArg(self.builder.path(script));
     command.setCwd(self.builder.path("."));

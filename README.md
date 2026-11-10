@@ -1,20 +1,30 @@
 # Flatzz site
 
-Documentation for [Flatzz](https://github.com/neudinger/flatzz), built with
-Zine and SuperMD. Build with Zig 0.17.0 and run tests with Node.js 22.
+Documentation and browser-local FlatBuffers playgrounds for [Flatzz](https://github.com/neudinger/flatzz).
+Built with Zine, SuperMD, and shared SuperHTML layouts, following `zast-site`.
+
+
+## Build and preview
 
 ```sh
 zig build --fetch=all
 zig build
+zig build serve
 zig build test
 ```
 
-The generated release is written to `dist/`.
+Output: `dist/`. Preview: <http://127.0.0.1:1991/>. Stop with Ctrl+C.
+Content, layouts, and edits to existing CSS/browser assets reload during preview.
+Restart after adding or removing assets; rebuild and restart after library, Wasm,
+or generated catalogue changes.
 
-The native build discovers examples from the pinned Flatzz package.
+`content/` contains pages, `layouts/` shared structure, `assets/` browser code and
+artwork, and `tools/` site preparation and the native Zine coordinator. Official
+examples and both API references come from Flatzz. Zig prepares both in the
+build cache, and releases validate before replacing the ignored `dist/`.
 
-The freestanding Wasm compiler runs locally in the browser.
+`zig build docs` and `zig build examples` refresh the complete release;
+`zig build wasm` compiles the runtime demonstrations, and `zig build test-wasm`
+checks the reusable compiler ABI and native parity. `zig build clean` removes `dist/`.
 
-The playground supports FBS → Zig, FBS → JSON metadata, and BFBS → Zig.
-
-The build publishes themed runtime and compiler APIs from Zig documentation.
+FBS → Zig, FBS → JSON metadata, and BFBS → Zig run locally in the browser.
