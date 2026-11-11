@@ -1,10 +1,11 @@
 //! zvm-lock: 0.17.0
 //! Coordinate Zine, the library compiler, official examples, and themed API references.
 const std = @import("std");
+const manifest = @import("build.zig.zon");
 const Tools = @import("tools/Tools.zig");
 
 comptime {
-    const required_version = @import("build.zig.zon").minimum_zig_version;
+    const required_version = manifest.minimum_zig_version;
     if (!std.mem.eql(u8, @import("builtin").zig_version_string, required_version)) {
         @compileError("This site requires Zig " ++ required_version ++
             "; run `zvm run " ++ required_version ++ " build`.");
@@ -30,6 +31,11 @@ pub fn build(builder: *std.Build) void {
     const preview = tools.addRun(.{ .serve = assets }, &.{});
     const clean = tools.addRun(.clean, &.{});
     const tests = tools.addTests(wasm, api, assets, &release.step);
+    const update_flatzz = if (@hasField(@TypeOf(manifest.dependencies.flatzz), "hash"))
+        &tools.addRun(.{ .@"update-flatzz" = builder.graph.zig_exe }, &.{}).step
+    else
+        &builder.addFail("Enable the Flatzz GitHub pin in build.zig.zon first.").step;
+
     // Default build -> prepared library content + native Zine release + validation.
     builder.getInstallStep().dependOn(&release.step);
 
@@ -38,6 +44,11 @@ pub fn build(builder: *std.Build) void {
             .tag = .clean,
             .description = "Remove the generated release without rebuilding it",
             .prerequisites = .{&clean.step},
+        },
+        .{
+            .tag = .@"update-flatzz",
+            .description = "Pin Flatzz to the latest GitHub main commit",
+            .prerequisites = .{update_flatzz},
         },
         .{
             .tag = .docs,

@@ -33,6 +33,7 @@ pub const SiteAssets = struct {
 pub const Command = union(enum) {
     clean,
     catalog,
+    @"update-flatzz": []const u8,
     @"prepare-api": Build.LazyPath,
     build: SiteAssets,
     serve: SiteAssets,
@@ -241,10 +242,11 @@ pub fn addRun(self: Self, command: Command, dependencies: []const *Step) *Step.R
     runner.setCwd(self.builder.path("."));
     runner.has_side_effects = switch (command) {
         .catalog, .@"prepare-api" => false,
-        .clean, .build, .serve => true,
+        .clean, .@"update-flatzz", .build, .serve => true,
     };
     switch (command) {
         .clean => {},
+        .@"update-flatzz" => |zig_executable| runner.addArg(zig_executable),
         .catalog => {
             runner.addArtifactArg2(self.compiler, .{ .make_absolute = true });
             runner.addDirectoryArg2(self.library.path("example"), .{ .make_absolute = true });
